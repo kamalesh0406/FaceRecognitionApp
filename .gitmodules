@@ -1,3 +1,0 @@
-[submodule "backend/FaceRecoBackend/mainbackend/models/facenet"]
-	path = backend/FaceRecoBackend/mainbackend/models/facenet
-	url = https://github.com/davidsandberg/facenet.git
