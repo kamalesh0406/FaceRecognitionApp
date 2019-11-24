@@ -37,6 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'mainbackend'
+
 ]
 
 MIDDLEWARE = [
@@ -69,7 +72,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'FaceRecoBackend.wsgi.application'
 
-
+MEDIA_ROOT =  os.path.join(BASE_DIR, 'media') 
+MEDIA_URL = '/media/'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
