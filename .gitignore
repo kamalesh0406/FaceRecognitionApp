@@ -37,6 +37,7 @@ npm-debug.log
 yarn-error.log
 
 backend/FaceRecoBackend/env/
+backend/FaceRecoBackend/media/
 
 # BUCK
 buck-out/
