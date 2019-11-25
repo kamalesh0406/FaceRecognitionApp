@@ -5,5 +5,5 @@ class ImageSerializer(serializers.ModelSerializer):
 
 	class Meta():
 		model = ImageModel
-		fields = ('id', 'name', 'file', 'timestamp')
+		fields = '__all__'
 
