@@ -4,31 +4,60 @@ from PIL import Image
 import numpy as np 
 import os
 from keras.models import load_model
+from sklearn.preprocessing import Normalizer
+from sklearn.preprocessing import LabelEncoder
+from sklearn.svm import SVC 
+import tensorflow as tf
+import pickle
 
 class ExtractFeatures:
 	def __init__(self):
-		paths = []
-		labels = []
-		trainData = []
+		self.paths = []
+		self.labels = []
+		self.trainData = []
+		self.facenet_model = load_model('/Users/kamaleshpalanisamy/Desktop/FaceRecognitionApp/backend/FaceRecoBackend/media/facenet_keras.h5')
+		self.input_encoder = Normalizer(norm='12')
+		self.out_encoder = LabelEncoder()
+		self.svm = SVC(kernel='linear')
+
 		for root, dirs, files in os.walk('/Users/kamaleshpalanisamy/Desktop/FaceRecognitionApp/backend/FaceRecoBackend/media/train'):
 			for file in files: 
-				labels.append(str(root).split('/')[-1])
-				paths.append(os.path.join(root, file))
-		print(paths[1])
-		for i in range(0, len(paths)):
-			image = self.extract_face(paths[i])
-			trainData.append(np.asarray(image))
-		trainData = np.array(trainData)
-		print(trainData.shape)
-		facenet_model = load_model('/Users/kamaleshpalanisamy/Desktop/FaceRecognitionApp/backend/FaceRecoBackend/media/facenet_keras.h5')
-		for pixels in trainData:
-			output = self.get_faceembeddings(facenet_model, pixels)
-			print(output.shape)
-	def add_new_face(self, name, paths):
-		labels.extend(name)
-		for i in range(0, len(paths)):
-			image = self.extract_face(paths[i])
-			trainData.append(np.asarray(image))
+				self.labels.append(str(root).split('/')[-1])
+				self.paths.append(os.path.join(root, file))
+
+	def add_new_face(self, name, path):
+		self.labels.extend(name)
+		self.paths.extend(path)
+		for i in range(0, len(self.paths)):
+			image = self.extract_face(self.paths[i])
+			output = self.get_faceembeddings(self.facenet_model, np.asarray(image))
+			self.trainData.append(output)
+		self.trainData = np.array(self.trainData)
+
+		print("Here!")
+		#Normalize all the values again
+		input_encoder = Normalizer(norm='l2')
+		self.trainData = input_encoder.transform(self.trainData)
+
+		self.out_encoder.fit(self.labels)
+		self.labels = self.out_encoder.transform(self.labels)
+
+		self.svm.fit(self.trainData, self.labels)
+		filename_out = '/Users/kamaleshpalanisamy/Desktop/FaceRecognitionApp/backend/FaceRecoBackend/media/encoder_model.sav'
+		pickle.dump(self.out_encoder, open(filename_out, 'wb'))
+		filename = '/Users/kamaleshpalanisamy/Desktop/FaceRecognitionApp/backend/FaceRecoBackend/media/finalized_model.sav'
+		pickle.dump(self.svm, open(filename, 'wb'))
+		print("Model Fitted&Saved")
+
+	def predict_name(self, path):
+		image = self.extract_face(path)
+		output = self.get_faceembeddings(self.facenet_model, np.array(image))
+		svm_models = pickle.load(open('/Users/kamaleshpalanisamy/Desktop/FaceRecognitionApp/backend/FaceRecoBackend/media/finalized_model.sav', 'rb')) 
+		out_encoder = pickle.load(open('/Users/kamaleshpalanisamy/Desktop/FaceRecognitionApp/backend/FaceRecoBackend/media/encoder_model.sav', 'rb'))
+		output = output.reshape(1, -1)
+		name = svm_models.predict(output)
+		actual_name = out_encoder.inverse_transform([name])
+		print(actual_name)
 
 	def extract_face(self, filename):
 		image = Image.open(filename)
@@ -61,7 +90,4 @@ class ExtractFeatures:
 		yhat = model.predict(samples)
 
 		return yhat[0]
-
-extract = ExtractFeatures()
-
 			
