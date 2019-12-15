@@ -58,6 +58,7 @@ class ExtractFeatures:
 		name = svm_models.predict(output)
 		actual_name = out_encoder.inverse_transform([name])
 		print(actual_name)
+		return actual_name
 
 	def extract_face(self, filename):
 		image = Image.open(filename)

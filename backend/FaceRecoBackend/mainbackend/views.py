@@ -7,13 +7,23 @@ from .models import ImageModel
 from .serializers import ImageSerializer
 from django.conf import settings
 import os
+import base64
+from django.core.files.base import ContentFile
 
+
+def base64_file(data, name=None):
+    _format, _img_str = data.split(';base64,')
+    _name, ext = _format.split('/')
+    if not name:
+        name = _name.split(":")[-1]
+    return ContentFile(base64.b64decode(_img_str), name='{}.{}'.format(name, ext))
 class Signup(APIView):
 
 	parser_classes = (MultiPartParser, FormParser)
 	def post(self, request, *args, **kwargs):
 		file_locations = []
 		names = []
+
 		files = request.data.getlist('file')
 		for file in files:
 			diction = {}
@@ -37,12 +47,11 @@ class Login(APIView):
 
 	parser_classes = (MultiPartParser, FormParser)
 
-	def extract(self, path):
-		
-
-		return super(Login, self).extract(path)
 	def post(self, request, *args, **kwargs):
-		file_serializer = ImageSerializer(data=request.data)
+		diction = {}
+		diction['name']= request.data['name']
+		diction['file']= base64_file(request.data['file'])
+		file_serializer = ImageSerializer(data=diction)
 
 		if file_serializer.is_valid():
 			file_serializer.save()
@@ -50,5 +59,6 @@ class Login(APIView):
 		model = ImageModel.objects.get(id=image_id)
 
 		extract_faces = ExtractFeatures()
-		extract_faces.predict_name(settings.BASE_DIR + str(model.file.url))
-		return Response(file_serializer.data, status=status.HTTP_201_CREATED)
+		name = extract_faces.predict_name(settings.BASE_DIR + str(model.file.url))
+		returnData = {"name":name}
+		return Response(returnData, status=status.HTTP_201_CREATED)
